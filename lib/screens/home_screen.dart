@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:coffee_app/services/auth_service.dart';
 import 'package:coffee_app/screens/login_screen.dart';
+import 'package:coffee_app/screens/menu_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -51,6 +52,32 @@ class HomeScreen extends StatelessWidget {
             const Text(
               'Your coffee is brewing...',
               style: TextStyle(fontSize: 16, color: Colors.white70),
+            ),
+            const SizedBox(height: 40),
+            SizedBox(
+              width: 200,
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const MenuScreen(),
+                    ),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFD4A96A),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.coffee_maker, color: Colors.white),
+                label: const Text(
+                  'View Menu',
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
+              ),
             ),
           ],
         ),
