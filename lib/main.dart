@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:coffee_app/firebase_options.dart';
-import 'package:coffee_app/screens/splash_screen.dart';
+import 'package:coffee_app/screens/menu_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,7 +25,7 @@ class MyApp extends StatelessWidget {
           seedColor: const Color(0xFFD4A96A),
         ),
       ),
-      home: const SplashScreen(),
+      home: const MenuScreen(),
     );
   }
 }

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:coffee_app/models/product_model.dart';
 import 'package:coffee_app/services/firestore_service.dart';
+import 'package:coffee_app/services/phone_auth_service.dart';
 import 'package:coffee_app/screens/cart_screen.dart';
+import 'package:coffee_app/screens/phone_login_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -12,6 +14,7 @@ class MenuScreen extends StatefulWidget {
 
 class _MenuScreenState extends State<MenuScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+  final PhoneAuthService _phoneAuthService = PhoneAuthService();
   final List<ProductModel> _cartItems = [];
   String _selectedCategory = 'All';
   List<ProductModel> _products = [];
@@ -46,6 +49,10 @@ class _MenuScreenState extends State<MenuScreen> {
   }
 
   void _addToCart(ProductModel product) {
+    if (!_phoneAuthService.isLoggedIn) {
+      _showLoginPrompt();
+      return;
+    }
     setState(() => _cartItems.add(product));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -54,6 +61,89 @@ class _MenuScreenState extends State<MenuScreen> {
         duration: const Duration(seconds: 1),
       ),
     );
+  }
+
+  void _openCart() {
+    if (!_phoneAuthService.isLoggedIn) {
+      _showLoginPrompt();
+      return;
+    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CartScreen(cartItems: _cartItems),
+      ),
+    );
+  }
+
+  void _showLoginPrompt() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF3D2314),
+        title: const Text('Login Required',
+            style: TextStyle(color: Color(0xFFD4A96A))),
+        content: const Text(
+          'Please login to add items to cart and place orders.',
+          style: TextStyle(color: Colors.white70),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white70)),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const PhoneLoginScreen()),
+              ).then((_) => setState(() {}));
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFD4A96A)),
+            child: const Text('Login', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _goToProfile() {
+    if (!_phoneAuthService.isLoggedIn) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => const PhoneLoginScreen()),
+      ).then((_) => setState(() {}));
+    } else {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          backgroundColor: const Color(0xFF3D2314),
+          title: const Text('Account', style: TextStyle(color: Color(0xFFD4A96A))),
+          content: Text(
+            'Logged in as:\n${_phoneAuthService.currentUser?.phoneNumber ?? ''}',
+            style: const TextStyle(color: Colors.white70),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close', style: TextStyle(color: Colors.white70)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                await _phoneAuthService.signOut();
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  setState(() => _cartItems.clear());
+                }
+              },
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Logout', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
   @override
@@ -65,20 +155,21 @@ class _MenuScreenState extends State<MenuScreen> {
         title: const Text('Our Menu',
             style: TextStyle(color: Color(0xFFD4A96A))),
         actions: [
+          IconButton(
+            icon: Icon(
+              _phoneAuthService.isLoggedIn
+                  ? Icons.account_circle
+                  : Icons.account_circle_outlined,
+              color: const Color(0xFFD4A96A),
+            ),
+            onPressed: _goToProfile,
+          ),
           Stack(
             children: [
               IconButton(
                 icon: const Icon(Icons.shopping_cart,
                     color: Color(0xFFD4A96A)),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          CartScreen(cartItems: _cartItems),
-                    ),
-                  );
-                },
+                onPressed: _openCart,
               ),
               if (_cartItems.isNotEmpty)
                 Positioned(
